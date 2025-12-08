@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Todo App  Fetching</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 600px;
+      margin: 40px auto;
+    }
+
+    .todo {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px;
+      margin-bottom: 6px;
+      border: 1px solid #db1588;
+      border-radius: 6px;
+    }
+
+    button {
+      margin-left: 10px;
+      cursor: pointer;
+      background-color: rgb(185, 231, 88);
+    }
+
+    .completed {
+      text-decoration: line-through;
+      color: rgb(231, 53, 3);
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Todo App</h1>
+  <button onclick="fetchTodos()">Fetch Todos</button>
+
+  <div id="todoList"></div>
+
+  <script>
+    const STORAGE_KEY = "todos";
+
+    // Fetching first 20 todos and save to th localStorage
+    async function fetchTodos() {
+      const res = await fetch("https://jsonplaceholder.typicode.com/todos");
+      const data = await res.json();
+
+      const firstTwenty = data.slice(0, 20);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(firstTwenty));
+
+      renderTodos();
+    }
+
+    //  Get todos from LocalStorage
+    function getStoredTodos() {
+      return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+    }
+
+    // Render todos onto UI
+    function renderTodos() {
+      const todos = getStoredTodos();
+      const list = document.getElementById("todoList");
+
+      if (todos.length === 0) {
+        list.innerHTML = "<p>No Todos Available</p>";
+        return;
+      }
+
+      list.innerHTML = "";
+
+      todos.forEach((todo) => {
+        const div = document.createElement("div");
+        div.className = "todo";
+
+        const title = document.createElement("span");
+        title.textContent = todo.title;
+        if (todo.completed) title.classList.add("completed");
+
+        // Completed Button
+        const toggleBtn = document.createElement("button");
+        toggleBtn.textContent = todo.completed ? "Unmark" : "Complete";
+        toggleBtn.onclick = () => toggleTodoStatus(todo.id);
+
+        // Delete Button
+        const deleteBtn = document.createElement("button");
+        deleteBtn.textContent = "Delete";
+        deleteBtn.onclick = () => deleteTodo(todo.id);
+
+        div.appendChild(title);
+        div.appendChild(toggleBtn);
+        div.appendChild(deleteBtn);
+
+        list.appendChild(div);
+      });
+    }
+
+    // Delete todo
+    function deleteTodo(id) {
+      let todos = getStoredTodos();
+      todos = todos.filter((todo) => todo.id !== id);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(todos));
+      renderTodos();
+    }
+
+    // Complete
+    function toggleTodoStatus(id) {
+      const todos = getStoredTodos();
+
+      const updated = todos.map((todo) =>
+        todo.id === id ? { ...todo, completed: !todo.completed } : todo
+      );
+
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+      renderTodos();
+    }
+
+    // Render immediately if localStorage already has data
+    renderTodos();
+  </script>
+</body>
+</html>
